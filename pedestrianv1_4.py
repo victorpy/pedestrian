@@ -114,7 +114,7 @@ while True:
 	for contour in contours:
 		x,y,w,h = cv2.boundingRect(contour)		
 		#if w>40 and h>90:
-		if w>20 and h>30:
+		if w>30 and h>40:
 			#print(x,y,w,h)
 			cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2, lineType=cv2.LINE_AA)
 			point = (int(x+w/2.0), int(y+h/2.0))
@@ -130,7 +130,7 @@ while True:
 			(xold, yold) = prevPoint
 			dist = cv2.sqrt((xnew-xold)*(xnew-xold)+(ynew-yold)*(ynew-yold))
 			#print(dist[0])
-			if dist[0] <= 40:
+			if dist[0] <= 50:
 				if line1(xnew, ynew) >= 0 and line2(xnew, ynew) <= 0:
 					if line1(xold, yold) < 0: # Point entered from line below (1)
 						pointFromBelow.add(point)
