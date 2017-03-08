@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from StringIO import StringIO
 import argparse
+import time
 from dbaccess import *
 
 #'http://192.168.10.90/cgi-bin/snapshot.cgi?stream=1'
@@ -149,14 +150,18 @@ while True:
 					print(crossedAbove)
 					pointFromBelow.remove(prevPoint)
 					insert_log(db,1,0)
+					cv2.putText(img, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
+		(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 					cv2.imwrite('/var/www/html/output/a_b.png',img)
 					
-				if line2(xnew, ynew) > 0 and prevPoint in pointFromAbove: # Point is below the line
+				if line2(xnew, ynew) < 0 and prevPoint in pointFromAbove: # Point is below the line
 					print('One Crossed B/A, sending to DB')
 					crossedBelow += 1
 					print(crossedBelow)
 					pointFromAbove.remove(prevPoint)
 					insert_log(db,0,1)
+					cv2.putText(img, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
+		(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 					cv2.imwrite('/var/www/html/output/b_a.png',img)
 	
 	
