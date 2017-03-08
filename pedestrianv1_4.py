@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from StringIO import StringIO
 import argparse
+from dbaccess import *
 
 #'http://192.168.10.90/cgi-bin/snapshot.cgi?stream=1'
 
@@ -48,6 +49,10 @@ args = vars(ap.parse_args())
 if args.get("url", None) is None:
 	print("no url argument")
 	sys.exit()
+
+print("connecting to DB")
+db = connectDB()
+
 
 print("Starting Capture")
 
@@ -143,12 +148,16 @@ while True:
 					crossedAbove += 1
 					print(crossedAbove)
 					pointFromBelow.remove(prevPoint)
+					insert_log(db,1,0)
+					cv2.imwrite('/var/www/html/output/a_b.png',img)
 					
 				if line2(xnew, ynew) > 0 and prevPoint in pointFromAbove: # Point is below the line
 					print('One Crossed B/A, sending to DB')
 					crossedBelow += 1
 					print(crossedBelow)
-					pointFromAbove.remove(prevPoint)	  
+					pointFromAbove.remove(prevPoint)
+					insert_log(db,0,1)
+					cv2.imwrite('/var/www/html/output/b_a.png',img)
 	
 	
 	#for point in points:
