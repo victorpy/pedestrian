@@ -100,7 +100,7 @@ while True:
 	fgmask = img	
 	#fgmask = cv2.blur(img, (10,10))
 	fgmask =  cv2.GaussianBlur(img,(5,5),0)
-	fgmask = fgbg.apply(fgmask) #, learningRate=0.01
+	fgmask = fgbg.apply(fgmask, learningRate=0.05) #, learningRate=0.01
 	#erosion = cv2.erode(fgmask,None,iterations = 1);
 	#dilation = cv2.dilate(erosion,None,iterations = 1);
 	#cv2.imshow("dil", dilation)
