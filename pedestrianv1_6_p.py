@@ -44,11 +44,12 @@ def read_from_rtsp(vcap):
 
 
 print("[INFO] starting video file thread...")
-fvs = FileVideoStream('upcamvid.avi', queueSize=910).start()
+#fvs = FileVideoStream('upcamvid.avi', queueSize=910).start()
+fvs = FileVideoStream("rtsp://192.168.10.90:554/h264?username=admin&password=123456", queueSize=910).start()
 time.sleep(1.0)
 
-w = 480
-h = 270
+w = 146
+h = 202
 frameArea = h*w
 #areaTH = frameArea/250
 areaTH = 2000
@@ -58,8 +59,8 @@ print('Area Threshold', areaTH)
 line_up = int(2*(h/5))
 line_down   = int(3*(h/5))
 
-up_limit =   int(1*(h/5))
-down_limit = int(4*(h/5))
+up_limit =   int(1*(h/6))
+down_limit = int(5*(h/6))
 
 print("Red line y:",str(line_down))
 print("Blue line y:", str(line_up))
@@ -83,16 +84,16 @@ pt8 =  [w, down_limit];
 pts_L4 = np.array([pt7,pt8], np.int32)
 pts_L4 = pts_L4.reshape((-1,1,2))
 
-fgbg = cv2.createBackgroundSubtractorMOG2(varThreshold=100)#history=100, varThreshold=100, detectShadows = True) #Create the background substractor
+fgbg = cv2.createBackgroundSubtractorMOG2(varThreshold=120)#history=100, varThreshold=100, detectShadows = True) #Create the background substractor
 
 #Create the background substractor
 kernelOp = np.ones((3,3),np.uint8)
 kernelCl = np.ones((13,13),np.uint8)
-areaTH = 3500
+areaTH = 2000
 #Variables
 font = cv2.FONT_HERSHEY_SIMPLEX
 persons = []
-max_p_age = 2
+max_p_age = 4
 pid = 1
 #Contadores de entrada y salida
 cnt_up   = 0
@@ -108,19 +109,20 @@ dim = (360,202)
 #print('fps', fps)
 
 ###train###
-cap = cv2.VideoCapture('upcamrtsp.avi') #Open video file
+#cap = cv2.VideoCapture('upcamrtsp.avi') #Open video file
 
-while cap.isOpened():
-    try:
-        frame = cv2.resize(frame, dim)
-        frame = mask_image(frame,mask_pts)
-    except  Exception as e:
-        print(str(e))
-        break
+#while cap.isOpened():
+#    try:
+#        frame = cv2.resize(frame, dim)
+        #crop image keep from y line 118 to line 264  for image shape (360,202) 
+#        frame = frame[:, 118:264]
+#    except  Exception as e:
+#        print(str(e))
+#        break
         
-    fgmask = fgbg.apply(frame)#, learningRate=0.05) #Use the substractor
+#    fgmask = fgbg.apply(frame)#, learningRate=0.05) #Use the substractor
 	
-cap.release() 
+#cap.release() 
 
 #cap = cv2.VideoCapture('upcamvid.avi') #Open video file
 
@@ -139,10 +141,7 @@ while fvs.more():
     
     try:
         frame = cv2.resize(frame, dim)        
-	a = datetime.datetime.now()
-	crop_img = frame[90:300, 20:180]	
-        b = datetime.datetime.now()
-        frame = mask_image(frame,mask_pts)
+	    frame = frame[:, 118:264]
     except  Exception as e:
         print(str(e))
         break
@@ -190,21 +189,27 @@ while fvs.more():
 	                    if i.going_UP(line_down,line_up) == True:
 	                        cnt_up += 1;
 	                        print("ID:",i.getId(),'crossed going up at',time.strftime("%c"))
-	                    elif i.going_DOWN(line_down,line_up) == True:
-	                        cnt_down += 1;
-	                        print ("ID:",i.getId(),'crossed going down at',time.strftime("%c"))
-	                    break
-	                    
-	                    if i.getState() == '1':
-	                        if i.getDir() == 'down' and i.getY() > down_limit:
-	                            i.setDone()
-	                        elif i.getDir() == 'up' and i.getY() < up_limit:
-	                            i.setDone()
-	                    if i.timedOut():
-	                        #sacar i de la lista persons
 	                        index = persons.index(i)
 	                        persons.pop(index)
 	                        del i     #liberar la memoria de i
+	                    elif i.going_DOWN(line_down,line_up) == True:
+	                        cnt_down += 1;
+	                        print ("ID:",i.getId(),'crossed going down at',time.strftime("%c"))
+	                        index = persons.index(i)
+	                        persons.pop(index)
+	                        del i     #liberar la memoria de i
+	                    break
+	                    
+					if i.getState() == '1':
+						if i.getDir() == 'down' and i.getY() > down_limit:
+							i.setDone()
+						elif i.getDir() == 'up' and i.getY() < up_limit:
+							i.setDone()
+					if i.timedOut():
+						#sacar i de la lista persons
+						index = persons.index(i)
+						persons.pop(index)
+						del i     #liberar la memoria de i
 	            if new == True:
 	                p = Person.MyPerson(pid,cx,cy, max_p_age)
 	                persons.append(p)
@@ -230,8 +235,8 @@ while fvs.more():
     #    cv2.putText(frame, str(i.getId()),(i.getX(),i.getY()),font,0.3,i.getRGB(),1,cv2.LINE_AA)
     
     
-    str_up = 'UP: '+ str(cnt_up)
-    str_down = 'DOWN: '+ str(cnt_down)
+    #str_up = 'UP: '+ str(cnt_up)
+    #str_down = 'DOWN: '+ str(cnt_down)
     #frame = cv2.polylines(frame,[pts_L1],False,line_down_color,thickness=2)
     #frame = cv2.polylines(frame,[pts_L2],False,line_up_color,thickness=2)
     #frame = cv2.polylines(frame,[pts_L3],False,(255,255,255),thickness=1)
@@ -250,7 +255,7 @@ while fvs.more():
     #    break
     #b = datetime.datetime.now()
 	# stop the timer and display FPS information
-    print("diff", b-a)
+    #print("diff", b-a)
 fps.stop()
 print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
