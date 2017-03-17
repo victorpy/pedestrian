@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from StringIO import StringIO
 import argparse
+import datetime
 import time
 from dbaccess import *
 
@@ -96,9 +97,9 @@ while True:
 	fgmask = grayscaleImage
 	#fgmask = cv2.blur(img, (10,10))
 	fgmask =  cv2.GaussianBlur(fgmask,(5,5),0)
-	fgmask = fgbg.apply(fgmask, learningRate=0.05) #, learningRate=0.01
-	#erosion = cv2.erode(fgmask,None,iterations = 1);
-	#dilation = cv2.dilate(erosion,None,iterations = 1);
+	fgmask = fgbg.apply(fgmask, learningRate=0.04) #, learningRate=0.01
+	erosion = cv2.erode(fgmask,None,iterations = 1);
+	dilation = cv2.dilate(erosion,None,iterations = 1);
 	#cv2.imshow("dil", dilation)
 	#fgmask = cv2.medianBlur(fgmask, 3)
 	oldFgmask = fgmask.copy()
@@ -123,7 +124,7 @@ while True:
 			pointInMiddle.add(point)
 			crossedAbove += 1
 			print(crossedAbove)
-			pointFromBelow.remove(prevPoint)
+			#pointFromBelow.remove(prevPoint)
 			insert_log(db,1,0)
 			cv2.putText(img, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
 (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)

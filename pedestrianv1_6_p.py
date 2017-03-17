@@ -6,7 +6,7 @@ import time
 import Person
 from io import BytesIO
 import pycurl
-#import urllib.request
+import urllib
 import datetime
 
 mask_pts = np.array([[180, 4],[365, 2], [334, 273], [155, 268]], np.int32)
@@ -31,9 +31,9 @@ def mask_image(img,pts):
 	
 def read_from_url(url):
 
-	with urllib.request.urlopen("http://192.168.10.91/cgi-bin/snapshot.cgi?stream=0") as url:
-		arr = np.asarray(bytearray(url.read()), dtype=np.uint8)
-		img = cv2.imdecode(arr,-1) # 'load it as it is'
+	url = urllib.urlopen("http://192.168.10.91/cgi-bin/snapshot.cgi?stream=0")
+	arr = np.asarray(bytearray(url.read()), dtype=np.uint8)
+	img = cv2.imdecode(arr,-1) # 'load it as it is'
         #print(img.shape)
 	return img
 
@@ -45,8 +45,8 @@ def read_from_rtsp(vcap):
 
 print("[INFO] starting video file thread...")
 #fvs = FileVideoStream('upcamvid.avi', queueSize=910).start()
-fvs = FileVideoStream("rtsp://192.168.10.90:554/h264?username=admin&password=123456", queueSize=910).start()
-time.sleep(1.0)
+#fvs = FileVideoStream("rtsp://192.168.10.91:554/h264?username=admin&password=123456", queueSize=910).start()
+#time.sleep(1.0)
 
 w = 146
 h = 202
@@ -102,11 +102,11 @@ cnt_down = 0
 #dim = (480,270)
 dim = (360,202)
 
-#url = "rtsp://192.168.10.91:554/h264?username=admin&password=123456"
-#vcap = cv2.VideoCapture(url)
-#fps = vcap.get(cv2.CAP_PROP_FPS); 
+url = "rtsp://192.168.10.91:554/h264cif?username=admin&password=123456"
+vcap = cv2.VideoCapture(url)
+fps = vcap.get(cv2.CAP_PROP_FPS); 
 
-#print('fps', fps)
+print('fps', fps)
 
 ###train###
 #cap = cv2.VideoCapture('upcamrtsp.avi') #Open video file
@@ -129,19 +129,20 @@ dim = (360,202)
 # start the FPS timer
 fps = FPS().start()
 
-while fvs.more():
-#while vcap.isOpened():
+#while fvs.more():
+while vcap.isOpened():
+#while True:
     #a = datetime.datetime.now()
-    #ret, frame = cap.read()
+    ret, frame = vcap.read()
     #frame = read_from_url('http://192.168.10.91/cgi-bin/snapshot.cgi?stream=0')
     #frame = read_from_rtsp(vcap)
-    frame = fvs.read()
+    #frame = fvs.read()
     for i in persons:
         i.age_one() #age every person one frame
     
     try:
         frame = cv2.resize(frame, dim)        
-	    frame = frame[:, 118:264]
+        frame = frame[:, 118:264]
     except  Exception as e:
         print(str(e))
         break
@@ -192,24 +193,29 @@ while fvs.more():
 	                        index = persons.index(i)
 	                        persons.pop(index)
 	                        del i     #liberar la memoria de i
+				cv2.imwrite('/var/www/html/output/up'+str(cnt_up)+'.png',frame)
+				print('UP: '+ str(cnt_up))
 	                    elif i.going_DOWN(line_down,line_up) == True:
 	                        cnt_down += 1;
 	                        print ("ID:",i.getId(),'crossed going down at',time.strftime("%c"))
 	                        index = persons.index(i)
 	                        persons.pop(index)
 	                        del i     #liberar la memoria de i
+				cv2.imwrite('/var/www/html/output/down'+str(cnt_down)+'.png',frame)
+				print('DOWN: '+ str(cnt_down))
 	                    break
 	                    
-					if i.getState() == '1':
-						if i.getDir() == 'down' and i.getY() > down_limit:
-							i.setDone()
-						elif i.getDir() == 'up' and i.getY() < up_limit:
-							i.setDone()
-					if i.timedOut():
-						#sacar i de la lista persons
-						index = persons.index(i)
-						persons.pop(index)
-						del i     #liberar la memoria de i
+                        if i.getState() == '1':
+                            if i.getDir() == 'down' and i.getY() > down_limit:
+                                i.setDone()
+                            elif i.getDir() == 'up' and i.getY() < up_limit:
+                                i.setDone()
+                        if i.timedOut():
+                            #sacar i de la lista persons
+                            index = persons.index(i)
+                            persons.pop(index)
+                            del i     #liberar la memoria de i
+
 	            if new == True:
 	                p = Person.MyPerson(pid,cx,cy, max_p_age)
 	                persons.append(p)
@@ -260,6 +266,6 @@ fps.stop()
 print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 
-cap.release() #release video file
+#cap.release() #release video file
 cv2.destroyAllWindows() #close all openCV windows
 
